@@ -16,7 +16,8 @@ jobs:
         with: { node-version: '20' }
       - run: npm ci && npm run build
       - run: pip install -r requirements.txt || pip install platformio
-      - run: pio run -e awning_V4
+      - run: pio run -e awning_V4 | tee v4.log
+      - run: grep -c esp_now .pio/build/awning_V4/firmware.map && grep -q 'aw_rotTick' .pio/build/awning_V4/firmware.map
       - run: pio run -e awning_4MB
         continue-on-error: true
       - run: ls -la build_output/firmware .pio/build/awning_4MB/*.bin || true
