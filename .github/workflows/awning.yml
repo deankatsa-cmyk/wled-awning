@@ -1,0 +1,25 @@
+name: Build awning firmware
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.11' }
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
+      - run: npm ci && npm run build
+      - run: pip install -r requirements.txt || pip install platformio
+      - run: pio run -e awning_4MB
+      - run: ls -la build_output/firmware .pio/build/awning_4MB/*.bin || true
+      - uses: actions/upload-artifact@v4
+        with:
+          name: awning_4MB
+          path: |
+            build_output/firmware/*.bin
+            .pio/build/awning_4MB/firmware.bin
+            .pio/build/awning_4MB/bootloader.bin
+            .pio/build/awning_4MB/partitions.bin
