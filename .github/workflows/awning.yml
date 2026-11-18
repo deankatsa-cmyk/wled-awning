@@ -13,13 +13,18 @@ jobs:
         with: { node-version: '20' }
       - run: npm ci && npm run build
       - run: pip install -r requirements.txt || pip install platformio
+      - run: pio run -e awning_V4
       - run: pio run -e awning_4MB
+        continue-on-error: true
       - run: ls -la build_output/firmware .pio/build/awning_4MB/*.bin || true
       - uses: actions/upload-artifact@v4
         with:
-          name: awning_4MB
+          name: awning-firmware
           path: |
             build_output/firmware/*.bin
             .pio/build/awning_4MB/firmware.bin
+            .pio/build/awning_V4/firmware.bin
+            .pio/build/awning_V4/bootloader.bin
+            .pio/build/awning_V4/partitions.bin
             .pio/build/awning_4MB/bootloader.bin
             .pio/build/awning_4MB/partitions.bin
