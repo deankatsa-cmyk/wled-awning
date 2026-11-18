@@ -1,7 +1,10 @@
 name: Build awning firmware
 on:
   push:
+    branches: [main]
   workflow_dispatch:
+permissions:
+  contents: write
 jobs:
   build:
     runs-on: ubuntu-22.04
@@ -28,3 +31,10 @@ jobs:
             .pio/build/awning_V4/partitions.bin
             .pio/build/awning_4MB/bootloader.bin
             .pio/build/awning_4MB/partitions.bin
+      - name: Publish firmware to the firmware branch
+        run: |
+          mkdir -p /tmp/fw && cp .pio/build/awning_V4/firmware.bin /tmp/fw/awning_V4.bin && cp .pio/build/awning_V4/bootloader.bin /tmp/fw/awning_V4_bootloader.bin && cp .pio/build/awning_V4/partitions.bin /tmp/fw/awning_V4_partitions.bin
+          cp .pio/build/awning_4MB/firmware.bin /tmp/fw/awning_4MB.bin || true
+          cd /tmp/fw && git init -q && git checkout -q -b firmware && git add -A
+          git -c user.name=github-actions -c user.email=actions@github.com commit -qm "Firmware from ${GITHUB_SHA::7}"
+          git push -f "https://x-access-token:${{ secrets.GITHUB_TOKEN }}@github.com/${GITHUB_REPOSITORY}.git" firmware
