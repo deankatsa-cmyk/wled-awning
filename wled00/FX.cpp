@@ -13020,12 +13020,19 @@ void aw_rotStart(uint8_t bank) { aw_rotBank = bank; aw_rotT = millis(); aw_rotAr
 void aw_rotStop() { aw_rotBank = 0; }
 
 // ---- Energy buttons (S4 Ultimate, S5 Breakdown, S6 Build-up, S7 Drop) ----
-// All four play the same pool of sound-reactive looks. Pressing a different energy button keeps the look that's playing and
+// Opt-in: only when that button's preset has "aw_en":1. Otherwise S4-S7 are ordinary buttons that play their own preset
+// (normally a random group of looks) every press.
+// In energy mode all four play the same pool of sound-reactive looks. Pressing a different energy button keeps the look that's playing and
 // only sets its Speed and Intensity (sensitivity) sliders to that energy; pressing the same button again picks a new look,
 // at that energy. The energy stays applied to every look, palette step and arm rotation until another kind of button.
 static uint8_t aw_energy = 0; static int16_t aw_enFor = -1000;
 static const uint8_t AW_EN_SX[8] = {0, 0, 0, 0, 255, 110, 180, 230}, AW_EN_IX[8] = {0, 0, 0, 0, 255, 120, 200, 255};
-bool aw_soundButton(uint8_t n) {                                // true: load a new look (same button again, or first press)
+static bool aw_enMode(uint8_t n) {                              // does preset n ask for energy mode ("aw_en":1)?
+  if (!requestJSONBufferLock(44)) return false;
+  const bool en = readObjectFromFileUsingId("/presets.json", n, &doc) && (doc["aw_en"] | 0) != 0;
+  releaseJSONBufferLock(); return en; }
+bool aw_soundButton(uint8_t n) {                                // true: load a new look (same button again, first press, or a plain button)
+  if (n < 4 || n > 7 || !aw_enMode(n)) { aw_energy = 0; return true; }
   const bool load = aw_energy == 0 || aw_energy == n; aw_energy = (n >= 4 && n <= 7) ? n : 0; aw_enFor = -1000; return load; }
 void aw_soundStop() { aw_energy = 0; }
 static void aw_applyEnergy(int only) {
